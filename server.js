@@ -49,6 +49,7 @@ app.use('/api/v1', protectedRoutes);
 const authRehydrateRouter = express.Router();
 authRehydrateRouter.use(authentication);
 authRehydrateRouter.get('/me', getMe);
+app.use('/api/v1/auth', authRehydrateRouter);
 app.use('/api/auth', authRehydrateRouter);
 app.use('/api', authRehydrateRouter);
 

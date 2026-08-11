@@ -9,6 +9,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "echo \"Backend build complete\"",
+    "start": "cross-env ENVIRONMENT=PRODUCTION node server",
     "start-dev": "cross-env ENVIRONMENT=DEVELOPMENT nodemon server",
     "start-prod": "cross-env ENVIRONMENT=PRODUCTION node server"
   },
