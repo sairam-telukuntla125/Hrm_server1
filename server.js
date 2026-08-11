@@ -14,10 +14,20 @@ const { getMe } = require('./src/controllers/auth');
 
 /* Variables. */
 const app = express();
-const allowedOrigins = (process.env.CLIENT_ORIGINS || 'http://localhost:3000,http://localhost:5173')
+const allowedOrigins = (process.env.CLIENT_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://hrm-browser-git-main-hrm14.vercel.app')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
+
+const corsOptions = {
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+};
 
 /* Middlewares. */
 app.use(helmet());
@@ -25,14 +35,8 @@ app.set('trust proxy', 1);
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
 app.use(limiter);
 app.use(express.json({ limit: '2mb' }));
-app.use(cors({
-    origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
-    },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
-}));
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Used by deployment platforms and load balancers. It never depends on auth.
@@ -64,9 +68,7 @@ let reconnectTimer;
 let isConnecting = false;
 
 const startServer = () => {
-    // A MongoDB reconnect must never create a second HTTP listener.
     if (server) return;
-
     server = app.listen(port, () => {
         console.log(`The server is running in the port : ${port}`);
     });
@@ -77,7 +79,6 @@ const startServer = () => {
 
 const scheduleReconnect = () => {
     if (reconnectTimer || isConnecting || mongoose.connection.readyState === 1) return;
-
     console.log('Retrying MongoDB connection in 5 seconds...');
     reconnectTimer = setTimeout(() => {
         reconnectTimer = null;
