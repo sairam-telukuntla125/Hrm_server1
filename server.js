@@ -35,7 +35,7 @@ app.set('trust proxy', 1);
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
 app.use(limiter);
 app.use(express.json({ limit: '2mb' }));
-app.options('*', cors(corsOptions));
+app.options('(.*)', cors(corsOptions));
 app.use(cors(corsOptions));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
