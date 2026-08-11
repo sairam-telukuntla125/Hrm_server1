@@ -35,8 +35,14 @@ app.set('trust proxy', 1);
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 1000, standardHeaders: true, legacyHeaders: false });
 app.use(limiter);
 app.use(express.json({ limit: '2mb' }));
-app.options('(.*)', cors(corsOptions));
+
+// FIX: '(.*)' is no longer accepted as a path string by the path-to-regexp
+// version bundled with newer express/router releases (it throws
+// "PathError: Unexpected ( at index 0"). app.use(cors(corsOptions)) below
+// already handles preflight OPTIONS requests globally, so the explicit
+// app.options('(.*)', ...) call was redundant anyway - just remove it.
 app.use(cors(corsOptions));
+
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Used by deployment platforms and load balancers. It never depends on auth.
