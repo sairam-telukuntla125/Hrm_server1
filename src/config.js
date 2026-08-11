@@ -1,7 +1,7 @@
 /* Plugins. */
 require('dotenv').config();
 
-const DEV_DB_URL = process.env.DB_URL_DEV || 'mongodb://127.0.0.1:27017/hrms-test';
+const DEV_DB_URL = process.env.DB_URL_DEV || 'mongodb+srv://2100032125cseh_db_user:90e4GsmZmNbCKFwU@hrms.xbng5jt.mongodb.net';
 const PROD_DB_URL = process.env.DB_URL_PROD || DEV_DB_URL;
 const defaultAccessSecret = process.env.JWT_ACCESS_SECRET || process.env.ACCESS_TOKEN || 'neuzen-ai-access-secret-change-me';
 const defaultRefreshSecret = process.env.JWT_REFRESH_SECRET || process.env.REFRESH_TOKEN || 'neuzen-ai-refresh-secret-change-me';
