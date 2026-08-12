@@ -14,19 +14,31 @@ const { getMe } = require('./src/controllers/auth');
 
 /* Variables. */
 const app = express();
-const allowedOrigins = (process.env.CLIENT_ORIGINS || 'http://localhost:3000,http://localhost:5173,https://hrm-browser-git-main-hrm14.vercel.app')
+const defaultClientOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://hrm-browser-git-main-hrm14.vercel.app'
+];
+const configuredOrigins = (process.env.CLIENT_ORIGINS || '')
     .split(',')
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/$/, ''))
     .filter(Boolean);
+const allowedOrigins = new Set([...defaultClientOrigins, ...configuredOrigins]);
+const isProjectVercelOrigin = (origin) => /^https:\/\/hrm-browser(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin);
 
 const corsOptions = {
     origin(origin, callback) {
-        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+        const normalizedOrigin = origin?.replace(/\/$/, '');
+        if (!normalizedOrigin || allowedOrigins.has(normalizedOrigin) || isProjectVercelOrigin(normalizedOrigin)) {
+            return callback(null, true);
+        }
+        const error = new Error(`Origin ${origin} is not allowed by CORS`);
+        error.status = 403;
+        return callback(error);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true
+    credentials: false
 };
 
 /* Middlewares. */
