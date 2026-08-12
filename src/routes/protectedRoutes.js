@@ -70,6 +70,10 @@ router.delete('/payroll/:id', roleCheck(['admin']), async (req, res) => {
     } catch (e) { return res.status(500).json({ status: 500, message: 'Internal server error' }); }
 });
 
+// PDF viewer — streams stored PDFs through the API (works locally and in production)
+const pdfController = require('../controllers/pdf');
+router.get('/pdf/:type/:filename', pdfController.streamPdf);
+
 // Calendar
 const calendarController = require('../controllers/calendar');
 router.post('/calendar', roleCheck(['admin', 'hr']), calendarController.createEvent);
