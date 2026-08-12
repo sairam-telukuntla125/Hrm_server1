@@ -57,6 +57,10 @@ app.use(cors(corsOptions));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// PDF streaming — token validated inside controller via ?token= query param
+const pdfController = require('./src/controllers/pdf');
+app.get('/api/v1/pdf/:type/:filename', pdfController.streamPdf);
+
 // Used by deployment platforms and load balancers. It never depends on auth.
 app.get('/health', (req, res) => {
     const connected = mongoose.connection.readyState === 1;
