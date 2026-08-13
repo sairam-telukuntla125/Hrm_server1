@@ -11,6 +11,7 @@ const { port, db } = require('./src/config');
 const publicRouted = require('./src/routes/publicRoutes');
 const authentication = require('./src/middlewares/authentication');
 const { getMe } = require('./src/controllers/auth');
+const { storageRoot } = require('./src/utils/documentStorage');
 
 /* Variables. */
 const app = express();
@@ -55,11 +56,7 @@ app.use(express.json({ limit: '2mb' }));
 // app.options('(.*)', ...) call was redundant anyway - just remove it.
 app.use(cors(corsOptions));
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// PDF streaming — token validated inside controller via ?token= query param
-const pdfController = require('./src/controllers/pdf');
-app.get('/api/v1/pdf/:type/:filename', pdfController.streamPdf);
+app.use('/uploads', express.static(storageRoot));
 
 // Used by deployment platforms and load balancers. It never depends on auth.
 app.get('/health', (req, res) => {

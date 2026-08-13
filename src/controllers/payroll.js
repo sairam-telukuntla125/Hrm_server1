@@ -5,6 +5,7 @@ const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const Users = require('../models/Users');
+const { getDocumentDirectory } = require('../utils/documentStorage');
 
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
@@ -123,7 +124,7 @@ module.exports = {
             const b    = await computePayrollBreakdown(userId, monthNumber, yearNumber, { basic, allowances, deductions, bonus, overtimeRate });
             const { user } = b;
 
-            const uploadDir    = path.join(__dirname, '..', '..', 'uploads', 'payslips');
+            const uploadDir    = getDocumentDirectory('payslips');
             if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 
             const fileName     = `payslip_${userId}_${monthNumber}_${yearNumber}.pdf`;

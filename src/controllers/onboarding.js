@@ -4,6 +4,7 @@ const path = require('path');
 const OfferLetter = require('../models/OfferLetter');
 const Users = require('../models/Users');
 const { createNotification } = require('../utils/notifications');
+const { getDocumentDirectory } = require('../utils/documentStorage');
 
 module.exports = {
     onboardEmployee: async (req, res) => {
@@ -52,7 +53,7 @@ module.exports = {
             const { candidateName, candidateEmail, position, salary } = req.body;
             
             // Create uploads directory if it doesn't exist
-            const uploadDir = path.join(__dirname, '..', '..', 'uploads', 'offer-letters');
+            const uploadDir = getDocumentDirectory('offer-letters');
             if (!fs.existsSync(uploadDir)) {
                 fs.mkdirSync(uploadDir, { recursive: true });
             }
@@ -61,27 +62,34 @@ module.exports = {
             const pdfPath = path.join(uploadDir, fileName);
             const relativePath = `/uploads/offer-letters/${fileName}`;
 
-            // Generate PDF
-            const doc = new PDFDocument();
-            doc.pipe(fs.createWriteStream(pdfPath));
+            // Do not save the database record until the file has been fully written.
+            // This prevents a just-created offer letter from returning a 404/empty PDF
+            // on local machines and on slower deployed disks.
+            await new Promise((resolve, reject) => {
+                const doc = new PDFDocument();
+                const stream = fs.createWriteStream(pdfPath);
+                doc.pipe(stream);
+                stream.once('finish', resolve);
+                stream.once('error', reject);
+                doc.once('error', reject);
 
-            doc.fontSize(25).text('NEUZEN AI', { align: 'center' });
-            doc.moveDown();
-            doc.fontSize(18).text('Offer Letter', { align: 'center' });
-            doc.moveDown();
-            doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
-            doc.moveDown();
-            doc.text(`Dear ${candidateName},`);
-            doc.moveDown();
-            doc.text(`We are pleased to offer you the position of ${position} at NEUZEN AI.`);
-            doc.text(`Your starting salary will be $${salary} per annum.`);
-            doc.moveDown();
-            doc.text('Please sign and return this letter to accept the offer.');
-            doc.moveDown(3);
-            doc.text('Sincerely,');
-            doc.text('HR Department, NEUZEN AI');
-            
-            doc.end();
+                doc.fontSize(25).text('NEUZEN AI', { align: 'center' });
+                doc.moveDown();
+                doc.fontSize(18).text('Offer Letter', { align: 'center' });
+                doc.moveDown();
+                doc.fontSize(12).text(`Date: ${new Date().toLocaleDateString()}`);
+                doc.moveDown();
+                doc.text(`Dear ${candidateName},`);
+                doc.moveDown();
+                doc.text(`We are pleased to offer you the position of ${position} at NEUZEN AI.`);
+                doc.text(`Your starting salary will be $${salary} per annum.`);
+                doc.moveDown();
+                doc.text('Please sign and return this letter to accept the offer.');
+                doc.moveDown(3);
+                doc.text('Sincerely,');
+                doc.text('HR Department, NEUZEN AI');
+                doc.end();
+            });
 
             // Save to DB
             const offerLetter = new OfferLetter({

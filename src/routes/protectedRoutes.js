@@ -3,6 +3,7 @@ const express = require('express');
 /* Middlewares */
 const authentication = require('../middlewares/authentication');
 const roleCheck = require('../middlewares/role');
+const { getDocumentPath } = require('../utils/documentStorage');
 
 /* Controllers */
 const { getMe } = require('../controllers/auth');
@@ -63,12 +64,16 @@ router.delete('/payroll/:id', roleCheck(['admin']), async (req, res) => {
         const p = await Payroll.findByIdAndDelete(req.params.id);
         if (!p) return res.status(404).json({ status: 404, message: 'Payroll not found' });
         if (p.payslipPath) {
-            const full = path.join(__dirname, '..', '..', 'uploads', p.payslipPath.replace('/uploads/', ''));
+            const full = getDocumentPath('payslips', path.basename(p.payslipPath));
             if (fs.existsSync(full)) fs.unlinkSync(full);
         }
         return res.status(200).json({ status: 200, message: 'Payroll deleted' });
     } catch (e) { return res.status(500).json({ status: 500, message: 'Internal server error' }); }
 });
+
+// PDF streaming — auth handled by middleware, axios sends Authorization header
+const pdfController = require('../controllers/pdf');
+router.get('/pdf/:type/:filename', pdfController.streamPdf);
 
 // Calendar
 const calendarController = require('../controllers/calendar');
